@@ -54,15 +54,15 @@ module Delayed
 
           # Optimizations for faster lookups on some common databases
           case self.connection.adapter_name
-          when "PostgreSQL"
+#          when "PostgreSQL"
             # Custom SQL required for PostgreSQL because postgres does not support UPDATE...LIMIT
             # This locks the single record 'FOR UPDATE' in the subquery (http://www.postgresql.org/docs/9.0/static/sql-select.html#SQL-FOR-UPDATE-SHARE)
             # Note: active_record would attempt to generate UPDATE...LIMIT like sql for postgres if we use a .limit() filter, but it would not use
             # 'FOR UPDATE' and we would have many locking conflicts
-            quoted_table_name = self.connection.quote_table_name(self.table_name)
-            subquery_sql      = ready_scope.limit(1).lock(true).select('id').to_sql
-            reserved          = self.find_by_sql(["UPDATE #{quoted_table_name} SET locked_at = ?, locked_by = ? WHERE id IN (#{subquery_sql}) RETURNING *", now, worker.name])
-            reserved[0]
+            # quoted_table_name = self.connection.quote_table_name(self.table_name)
+            # subquery_sql      = ready_scope.limit(1).lock(true).select('id').to_sql
+            # reserved          = self.find_by_sql(["UPDATE #{quoted_table_name} SET locked_at = ?, locked_by = ? WHERE id IN (#{subquery_sql}) RETURNING *", now, worker.name])
+            # reserved[0]
           when "MySQL", "Mysql2"
             # This works on MySQL and possibly some other DBs that support UPDATE...LIMIT. It uses separate queries to lock and return the job
             count = ready_scope.limit(1).update_all(:locked_at => now, :locked_by => worker.name)
